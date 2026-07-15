@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>¡Campeones! — FIFA World Cup 2026</title>
+<style>
+  :root{
+    --rojo: #AA151B;
+    --rojo-deep: #6B0F14;
+    --oro: #F1BF00;
+    --oro-soft: #FFE27A;
+    --noche: #1A0505;
+    --crema: #FFF7E8;
+    --c1: #AA151B;
+    --c2: #F1BF00;
+    --c3: #FFE27A;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
+    height:100%;
+    background: radial-gradient(ellipse at 50% 20%, var(--c1) 0%, var(--noche) 70%);
+    overflow-x:hidden;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    color: var(--crema);
+    transition: background 1.2s ease;
+  }
+
+  .stage{
+    position:relative;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding: 6vh 5vw;
+    text-align:center;
+    overflow:hidden;
+  }
+
+  .sunburst{
+    position:absolute;
+    top:50%; left:50%;
+    width:220vmax; height:220vmax;
+    transform: translate(-50%,-50%);
+    background: repeating-conic-gradient(
+      var(--c2) 0deg 4deg,
+      transparent 4deg 16deg
+    );
+    opacity:0.07;
+    animation: spin 90s linear infinite;
+    pointer-events:none;
+  }
+  @keyframes spin{ to{ transform: translate(-50%,-50%) rotate(360deg); } }
+
+  /* ── Waiting state ── */
+  #waiting{
+    z-index:3;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:1.2em;
+  }
+  #waiting .ball{
+    font-size: clamp(2.4rem, 6vw, 3.4rem);
+    animation: bob 1.6s ease-in-out infinite;
+  }
+  @keyframes bob{
+    0%,100%{ transform: translateY(0); }
+    50%{ transform: translateY(-14px); }
+  }
+  #waiting .msg{
+    font-style: italic;
+    font-size: clamp(1rem, 2.4vw, 1.4rem);
+    color: var(--crema);
+    opacity:0.85;
+    letter-spacing:0.02em;
+  }
+  #waiting .sub{
+    font-size: 0.8rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--oro);
+    opacity:0.8;
+  }
+
+  /* ── Champion state ── */
+  #champion{ display:none; z-index:2; flex-direction:column; align-items:center; }
+
+  .eyebrow{
+    letter-spacing: 0.5em;
+    font-size: clamp(0.7rem, 1.4vw, 0.95rem);
+    text-transform: uppercase;
+    color: var(--c2);
+    font-style: italic;
+    opacity:0;
+    animation: fadeUp 0.8s 0.2s forwards ease-out;
+  }
+
+  .wordmark{
+    font-weight: 900;
+    font-style: italic;
+    font-size: clamp(3.2rem, 13vw, 9rem);
+    line-height: 0.92;
+    letter-spacing: -0.01em;
+    background: linear-gradient(180deg, var(--c3) 0%, var(--c2) 45%, #A5780A 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 60px rgba(241,191,0,0.35);
+    margin: 0.2em 0 0.05em;
+    opacity:0;
+    animation: fadeUp 0.9s 0.45s forwards ease-out;
+  }
+
+  .subline{
+    font-size: clamp(1rem, 2.4vw, 1.5rem);
+    font-style: italic;
+    opacity: 0;
+    margin-bottom: 0.3em;
+    animation: fadeUp 0.9s 0.7s forwards ease-out;
+  }
+
+  .scoreline{
+    display:flex;
+    align-items:center;
+    gap: 1.4em;
+    margin: 1.6em 0 0.6em;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.08em;
+    opacity:0;
+    animation: fadeUp 0.9s 0.95s forwards ease-out;
+  }
+  .scoreline .team{
+    font-size: clamp(1.1rem, 2.6vw, 1.7rem);
+    font-weight:700;
+    color: var(--crema);
+  }
+  .scoreline .vs{
+    font-size: 0.9rem;
+    color: var(--c2);
+    opacity:0.7;
+  }
+
+  .trophy-wrap{
+    margin: 1.4em 0;
+    opacity:0;
+    animation: trophyIn 1.1s 1.15s forwards cubic-bezier(.2,1.4,.4,1);
+  }
+  .trophy{
+    width: clamp(90px, 14vw, 160px);
+    height: auto;
+    filter: drop-shadow(0 0 40px rgba(241,191,0,0.55));
+    animation: lift 3.4s 2.3s ease-in-out infinite;
+  }
+
+  .tagline{
+    font-size: clamp(0.95rem, 2vw, 1.2rem);
+    max-width: 34ch;
+    line-height:1.5;
+    opacity:0;
+    animation: fadeUp 0.9s 1.4s forwards ease-out;
+  }
+  .tagline strong{ color: var(--c2); }
+
+  .divider{
+    width: 64px; height: 3px;
+    background: linear-gradient(90deg, transparent, var(--c2), transparent);
+    margin: 1.6em 0;
+    opacity:0;
+    animation: fadeUp 0.9s 1.3s forwards ease-out;
+  }
+
+  .credit{
+    position:absolute;
+    bottom: 2.4vh;
+    font-size: 0.7rem;
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    color: rgba(255,247,232,0.35);
+    z-index:2;
+  }
+
+  @keyframes fadeUp{
+    from{ opacity:0; transform: translateY(18px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+  @keyframes trophyIn{
+    0%{ opacity:0; transform: scale(0.4) translateY(40px); }
+    60%{ opacity:1; transform: scale(1.08) translateY(-6px); }
+    100%{ opacity:1; transform: scale(1) translateY(0); }
+  }
+  @keyframes lift{
+    0%,100%{ transform: translateY(0) rotate(-1.5deg); }
+    50%{ transform: translateY(-10px) rotate(1.5deg); }
+  }
+
+  .confetti{
+    position:fixed;
+    top:-10px;
+    width:10px; height:16px;
+    opacity:0.9;
+    animation-name: fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    z-index:1;
+    display:none;
+  }
+  @keyframes fall{
+    0%{ transform: translateY(-10vh) rotate(0deg); }
+    100%{ transform: translateY(110vh) rotate(600deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .sunburst, .trophy, .confetti, #waiting .ball{ animation: none !important; }
+    .wordmark, .subline, .scoreline, .trophy-wrap, .tagline, .divider, .eyebrow{
+      opacity:1 !important; animation:none !important; transform:none !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="sunburst"></div>
+
+  <div id="waiting">
+    <div class="ball">🏆</div>
+    <div class="msg">The final whistle hasn't blown yet…</div>
+    <div class="sub">Waiting for the Champion</div>
+  </div>
+
+  <div id="champion">
+    <div class="eyebrow">FIFA World Cup · 2026</div>
+    <h1 class="wordmark" id="championName">¡CAMPEONES!</h1>
+    <div class="subline" id="championSub">lifts the trophy</div>
+
+    <div class="scoreline">
+      <span class="team" id="championFlagName">🏆 CHAMPION</span>
+      <span class="vs">WORLD CHAMPIONS</span>
+    </div>
+
+    <div class="trophy-wrap">
+      <svg class="trophy" viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#FFE27A"/>
+            <stop offset="50%" stop-color="#F1BF00"/>
+            <stop offset="100%" stop-color="#A5780A"/>
+          </linearGradient>
+        </defs>
+        <path d="M35 10 L65 10 L65 30 Q65 55 50 60 Q35 55 35 30 Z" fill="url(#goldGrad)"/>
+        <path d="M35 15 Q15 15 15 32 Q15 46 32 48" fill="none" stroke="url(#goldGrad)" stroke-width="4"/>
+        <path d="M65 15 Q85 15 85 32 Q85 46 68 48" fill="none" stroke="url(#goldGrad)" stroke-width="4"/>
+        <rect x="46" y="58" width="8" height="24" fill="url(#goldGrad)"/>
+        <path d="M30 82 L70 82 L76 96 L24 96 Z" fill="url(#goldGrad)"/>
+        <rect x="20" y="96" width="60" height="10" rx="2" fill="url(#goldGrad)"/>
+        <circle cx="50" cy="30" r="6" fill="#6B0F14" opacity="0.5"/>
+      </svg>
+    </div>
+
+    <div class="divider"></div>
+
+    <p class="tagline" id="championTagline">A relentless run — and the trophy is theirs once again.</p>
+  </div>
+
+  <div class="credit">WCPrediction2026</div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const firebaseConfig = {
+    authDomain: "wc2026predictor-25a67.firebaseapp.com",
+    storageBucket: "wc2026predictor-25a67.firebasestorage.app",
+    databaseURL: "https://wc2026predictor-25a67-default-rtdb.firebaseio.com/"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // Team → flag emoji + color palette (covers all 48 teams in the field)
+  const TEAMS = {
+    "Algeria":       { flag:"🇩🇿", c1:"#007A3D", c2:"#FFFFFF", c3:"#D21034" },
+    "Argentina":     { flag:"🇦🇷", c1:"#75AADB", c2:"#FFFFFF", c3:"#F6B40E" },
+    "Australia":     { flag:"🇦🇺", c1:"#00843D", c2:"#FFCD00", c3:"#FFFFFF" },
+    "Austria":       { flag:"🇦🇹", c1:"#ED2939", c2:"#FFFFFF", c3:"#ED2939" },
+    "Belgium":       { flag:"🇧🇪", c1:"#E30613", c2:"#FCD116", c3:"#000000" },
+    "Bosnia":        { flag:"🇧🇦", c1:"#002395", c2:"#FECB00", c3:"#FFFFFF" },
+    "Brazil":        { flag:"🇧🇷", c1:"#FFDF00", c2:"#009739", c3:"#002776" },
+    "Canada":        { flag:"🇨🇦", c1:"#FF0000", c2:"#FFFFFF", c3:"#FF0000" },
+    "Cape Verde":    { flag:"🇨🇻", c1:"#003893", c2:"#CF2027", c3:"#F7D116" },
+    "Colombia":      { flag:"🇨🇴", c1:"#FCD116", c2:"#003893", c3:"#CE1126" },
+    "Croatia":       { flag:"🇭🇷", c1:"#FF0000", c2:"#FFFFFF", c3:"#171796" },
+    "Curacao":       { flag:"🇨🇼", c1:"#002B7F", c2:"#F9E814", c3:"#FFFFFF" },
+    "Czechia":       { flag:"🇨🇿", c1:"#D7141A", c2:"#11457E", c3:"#FFFFFF" },
+    "DR Congo":      { flag:"🇨🇩", c1:"#007FFF", c2:"#F7D618", c3:"#CE1021" },
+    "Ecuador":       { flag:"🇪🇨", c1:"#FFDD00", c2:"#034EA2", c3:"#EF3340" },
+    "Egypt":         { flag:"🇪🇬", c1:"#C8102E", c2:"#000000", c3:"#FFFFFF" },
+    "England":       { flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿", c1:"#CE1124", c2:"#FFFFFF", c3:"#0B4EA2" },
+    "France":        { flag:"🇫🇷", c1:"#0055A4", c2:"#FFFFFF", c3:"#EF4135" },
+    "Germany":       { flag:"🇩🇪", c1:"#000000", c2:"#DD0000", c3:"#FFCE00" },
+    "Ghana":         { flag:"🇬🇭", c1:"#CE1126", c2:"#FCD116", c3:"#006B3F" },
+    "Haiti":         { flag:"🇭🇹", c1:"#00209F", c2:"#D21034", c3:"#FFFFFF" },
+    "Iran":          { flag:"🇮🇷", c1:"#239F40", c2:"#DA0000", c3:"#FFFFFF" },
+    "Iraq":          { flag:"🇮🇶", c1:"#CE1126", c2:"#000000", c3:"#FFFFFF" },
+    "Ivory Coast":   { flag:"🇨🇮", c1:"#F77F00", c2:"#FFFFFF", c3:"#009E60" },
+    "Japan":         { flag:"🇯🇵", c1:"#002B7F", c2:"#FFFFFF", c3:"#BC002D" },
+    "Jordan":        { flag:"🇯🇴", c1:"#007A3D", c2:"#CE1126", c3:"#FFFFFF" },
+    "Mexico":        { flag:"🇲🇽", c1:"#006847", c2:"#CE1126", c3:"#FFFFFF" },
+    "Morocco":       { flag:"🇲🇦", c1:"#C1272D", c2:"#006233", c3:"#FFFFFF" },
+    "Netherlands":   { flag:"🇳🇱", c1:"#FF7900", c2:"#21468B", c3:"#FFFFFF" },
+    "New Zealand":   { flag:"🇳🇿", c1:"#000000", c2:"#FFFFFF", c3:"#00247D" },
+    "Norway":        { flag:"🇳🇴", c1:"#EF2B2D", c2:"#002868", c3:"#FFFFFF" },
+    "Panama":        { flag:"🇵🇦", c1:"#DA121A", c2:"#072357", c3:"#FFFFFF" },
+    "Paraguay":      { flag:"🇵🇾", c1:"#D52B1E", c2:"#0038A8", c3:"#FFFFFF" },
+    "Portugal":      { flag:"🇵🇹", c1:"#FF0000", c2:"#006600", c3:"#FFCC00" },
+    "Qatar":         { flag:"🇶🇦", c1:"#8D1B3D", c2:"#FFFFFF", c3:"#8D1B3D" },
+    "Saudi Arabia":  { flag:"🇸🇦", c1:"#006C35", c2:"#FFFFFF", c3:"#006C35" },
+    "Scotland":      { flag:"🏴󠁧󠁢󠁳󠁣󠁴󠁿", c1:"#0065BD", c2:"#FFFFFF", c3:"#0065BD" },
+    "Senegal":       { flag:"🇸🇳", c1:"#00853F", c2:"#FDEF42", c3:"#E31B23" },
+    "South Africa":  { flag:"🇿🇦", c1:"#007A4D", c2:"#FFB81C", c3:"#000000" },
+    "South Korea":   { flag:"🇰🇷", c1:"#CD2E3A", c2:"#0047A0", c3:"#FFFFFF" },
+    "Spain":         { flag:"🇪🇸", c1:"#AA151B", c2:"#F1BF00", c3:"#FFE27A" },
+    "Sweden":        { flag:"🇸🇪", c1:"#005293", c2:"#FECC00", c3:"#FFFFFF" },
+    "Switzerland":   { flag:"🇨🇭", c1:"#D52B1E", c2:"#FFFFFF", c3:"#D52B1E" },
+    "Tunisia":       { flag:"🇹🇳", c1:"#E70013", c2:"#FFFFFF", c3:"#E70013" },
+    "Turkiye":       { flag:"🇹🇷", c1:"#E30A17", c2:"#FFFFFF", c3:"#E30A17" },
+    "USA":           { flag:"🇺🇸", c1:"#002868", c2:"#BF0A30", c3:"#FFFFFF" },
+    "Uruguay":       { flag:"🇺🇾", c1:"#75AADB", c2:"#FFFFFF", c3:"#FCD116" },
+    "Uzbekistan":    { flag:"🇺🇿", c1:"#0099B5", c2:"#1EB53A", c3:"#FFFFFF" }
+  };
+  const FALLBACK = { flag:"🏆", c1:"#AA151B", c2:"#F1BF00", c3:"#FFE27A" };
+
+  const root = document.documentElement;
+  const waitingEl = document.getElementById('waiting');
+  const championEl = document.getElementById('champion');
+  const nameEl = document.getElementById('championName');
+  const subEl = document.getElementById('championSub');
+  const flagNameEl = document.getElementById('championFlagName');
+  const taglineEl = document.getElementById('championTagline');
+
+  let confettiBuilt = false;
+  function buildConfetti(colors){
+    document.querySelectorAll('.confetti').forEach(el=>el.remove());
+    const COUNT = 90;
+    for (let i = 0; i < COUNT; i++) {
+      const piece = document.createElement('div');
+      piece.className = 'confetti';
+      piece.style.display = 'block';
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const left = Math.random() * 100;
+      const size = 6 + Math.random() * 8;
+      const duration = 5 + Math.random() * 6;
+      const delay = Math.random() * 8;
+      piece.style.background = color;
+      piece.style.left = left + 'vw';
+      piece.style.width = size + 'px';
+      piece.style.height = (size * 1.6) + 'px';
+      piece.style.animationDuration = duration + 's';
+      piece.style.animationDelay = delay + 's';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      document.body.appendChild(piece);
+    }
+  }
+
+  function showChampion(teamName){
+    const t = TEAMS[teamName] || FALLBACK;
+    root.style.setProperty('--c1', t.c1);
+    root.style.setProperty('--c2', t.c2);
+    root.style.setProperty('--c3', t.c3);
+
+    nameEl.textContent = '¡CAMPEONES!';
+    subEl.textContent = `${teamName} lifts the trophy`;
+    flagNameEl.textContent = `${t.flag} ${teamName.toUpperCase()}`;
+    taglineEl.innerHTML = `Thirty-one days, one relentless run — and <strong>${teamName}</strong> stands alone at the top of the world. Enhorabuena, campeones.`;
+
+    waitingEl.style.display = 'none';
+    championEl.style.display = 'flex';
+
+    if(!confettiBuilt){
+      buildConfetti([t.c1, t.c2, t.c3, '#FFFFFF']);
+      confettiBuilt = true;
+    }
+  }
+
+  function showWaiting(){
+    championEl.style.display = 'none';
+    waitingEl.style.display = 'flex';
+    document.querySelectorAll('.confetti').forEach(el=>el.remove());
+    confettiBuilt = false;
+  }
+
+  onValue(ref(db, 'champion'), (snapshot) => {
+    const data = snapshot.val();
+    if (data && data.team) {
+      showChampion(data.team);
+    } else {
+      showWaiting();
+    }
+  });
+</script>
+</body>
+</html>
